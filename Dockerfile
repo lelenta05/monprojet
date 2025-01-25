@@ -1,36 +1,34 @@
-# Utilisation de l'image officielle PHP avec FPM
+# Utiliser l'image PHP officielle avec FPM
 FROM php:8.1-fpm
 
-# Installation des dépendances nécessaires à Laravel
+# Installer les dépendances nécessaires pour Composer et Laravel
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    unzip \
     git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+    unzip \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    zip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Installation de Composer (gestionnaire de dépendances PHP)
+# Installer Composer (gestionnaire de dépendances PHP)
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Définition du répertoire de travail
-WORKDIR /var/www
+# Copier le code de l'application dans le conteneur
+COPY . /var/www/html
 
-# Copier les fichiers de l'application Laravel dans le container
-COPY . .
+# Définir le répertoire de travail
+WORKDIR /var/www/html
 
-# Installer les dépendances PHP avec Composer
-RUN composer install --no-dev
+# Assurer que le répertoire a les bonnes permissions
+RUN chown -R www-data:www-data /var/www/html
 
-# Copier le fichier .env (si nécessaire)
-COPY .env.example .env
+# Exécuter composer install pour installer les dépendances
+RUN composer install --no-dev -vvv
 
-# Générer la clé d'application Laravel
-RUN php artisan key:generate
-
-# Exposer le port 80 pour le serveur Laravel
+# Exposer le port 80 (utilisé par le serveur web)
 EXPOSE 80
 
-# Démarrer le serveur Laravel
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80"]
+# Lancer PHP-FPM (serveur web)
+CMD ["php-fpm"]
