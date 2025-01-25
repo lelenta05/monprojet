@@ -20,11 +20,13 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # Étape 4: Définir le répertoire de travail
 WORKDIR /var/www
 
-# Étape 5: Copier les fichiers du projet
+# Étape 5: Copier les fichiers du projet et initialiser .env
 COPY . .
+COPY .env.example .env
+RUN php artisan key:generate
 
 # Étape 6: Installer les dépendances avec Composer
-RUN composer install --no-dev --prefer-dist --no-interaction
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
 # Étape 7: Donner les permissions appropriées
 RUN chown -R www-data:www-data /var/www \
